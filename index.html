@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Чек-лист идеальной смены</title>
+
+<style>
+  :root{
+    --blue:      #2B95CA;
+    --blue-dark: #1F7BA8;
+    --blue-soft: rgba(43, 149, 202, .07);
+    --white:     #FFFFFF;
+    --dark:      #2D2D2C;
+    --line:      rgba(45, 45, 44, .12);
+    --muted:     rgba(45, 45, 44, .65);
+  }
+
+  *{ box-sizing: border-box; }
+  html, body{ height: 100%; }
+
+  body{
+    margin: 0;
+    padding: 32px 16px;
+    background: var(--dark);
+    color: var(--dark);
+    font-family: 'YS Text', -apple-system, BlinkMacSystemFont, 'Segoe UI',
+                 Roboto, 'Helvetica Neue', Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ---------- Карточка ---------- */
+  .checklist{
+    max-width: 760px;
+    margin: 0 auto;
+    background: var(--white);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .38);
+  }
+
+  /* ---------- Шапка ---------- */
+  .checklist__header{
+    background: var(--blue);
+    color: var(--white);
+    padding: 28px 32px 24px;
+  }
+  .checklist__title{
+    margin: 0 0 6px;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -.2px;
+    line-height: 1.25;
+  }
+  .checklist__subtitle{
+    margin: 0;
+    font-size: 14px;
+    opacity: .92;
+  }
+
+  /* ---------- Прогресс ---------- */
+  .progress{ margin-top: 20px; }
+  .progress__bar{
+    height: 8px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .32);
+    overflow: hidden;
+  }
+  .progress__fill{
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: var(--white);
+    transition: width .35s ease;
+  }
+  .progress__label{
+    margin-top: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .01em;
+  }
+
+  /* ---------- Поля с данными ---------- */
+  .meta{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--line);
+  }
+  .field{
+    flex: 1 1 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .field__label{
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .field input{
+    width: 100%;
+    padding: 10px 12px;
+    font: inherit;
+    font-size: 14px;
+    color: var(--dark);
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    outline: none;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .field input:focus{
+    border-color: var(--blue);
+    box-shadow: 0 0 0 3px rgba(43, 149, 202, .18);
+  }
+
+  /* ---------- Список ---------- */
+  .items{
+    list-style: none;
+    margin: 0;
+    padding: 10px 16px 20px;
+  }
+
+  .category-title {
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--blue-dark);
+    padding: 20px 16px 8px;
+    margin-top: 10px;
+    border-bottom: 1px solid var(--line);
+  }
+  .category-title:first-child {
+    margin-top: 0;
+  }
+
+  .item{ border-radius: 12px; transition: background .2s ease; }
+  .item:hover{ background: var(--blue-soft); }
+  .item.is-done{ background: var(--blue-soft); }
+
+  .item label{
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    padding: 14px 16px;
+    cursor: pointer;
+    border-radius: 12px;
+    user-select: none;
+  }
+
+  .item input[type="checkbox"]{
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .checkbox{
+    flex: 0 0 24px;
+    width: 24px;
+    height: 24px;
+    margin-top: 1px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--white);
+    border: 2px solid rgba(45, 45, 44, .26);
+    border-radius: 7px;
+    transition: background .18s, border-color .18s, transform .12s;
+  }
+  .checkbox::after{
+    content: "";
+    width: 6px;
+    height: 12px;
+    margin-bottom: 3px;
+    border: solid var(--white);
+    border-width: 0 2.5px 2.5px 0;
+    transform: rotate(45deg) scale(0);
+    transition: transform .18s ease;
+  }
+  .item input:checked + .checkbox{
+    background: var(--blue);
+    border-color: var(--blue);
+  }
+  .item input:checked + .checkbox::after{
+    transform: rotate(45deg) scale(1);
+  }
+  .item input:focus-visible + .checkbox{
+    box-shadow: 0 0 0 3px rgba(43, 149, 202, .32);
+  }
+  .item label:active .checkbox{ transform: scale(.94); }
+
+  .item__text{
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .item__title{
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--dark);
+  }
+  .item__desc{
+    font-size: 14px;
+    line-height: 1.45;
+    color: var(--muted);
+  }
+  .item.is-done .item__title{ color: var(--blue-dark); }
+
+  /* ---------- Плашка «всё готово» ---------- */
+  .result{
+    display: none;
+    align-items: center;
+    gap: 10px;
+    margin: 4px 32px 0;
+    padding: 14px 16px;
+    border-radius: 12px;
+    background: var(--blue);
+    color: var(--white);
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  .result.is-visible{ display: flex; animation: pop .3s ease; }
+  @keyframes pop{
+    from{ opacity: 0; transform: translateY(6px); }
+    to  { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ---------- Кнопки ---------- */
+  .actions{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 20px 32px 8px;
+  }
+  .btn{
+    font: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 22px;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: background .2s, color .2s, border-color .2s, transform .1s;
+  }
+  .btn:active{ transform: translateY(1px); }
+  .btn--primary{
+    background: var(--blue);
+    color: var(--white);
+  }
+  .btn--primary:hover{ background: var(--blue-dark); }
+  .btn--ghost{
+    background: var(--white);
+    color: var(--dark);
+    border-color: rgba(45, 45, 44, .18);
+  }
+  .btn--ghost:hover{
+    color: var(--blue);
+    border-color: var(--blue);
+  }
+
+  .hint{
+    padding: 0 32px 26px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ---------- Модальные окна ---------- */
+  .modal{
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: rgba(45, 45, 44, .55);
+    z-index: 1000;
+  }
+  .modal.is-open{ display: flex; animation: fadeIn .18s ease; }
+  @keyframes fadeIn{ from{ opacity: 0; } to{ opacity: 1; } }
+
+  .modal__dialog{
+    width: 100%;
+    max-width: 400px;
+    background: var(--white);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .35);
+    animation: popIn .2s ease;
+  }
+  @keyframes popIn{
+    from{ opacity: 0; transform: translateY(8px) scale(.98); }
+    to  { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  .modal__text{
+    margin: 0 0 20px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--dark);
+    text-align: center;
+    line-height: 1.4;
+  }
+
+  .modal__actions{
+    display: flex;
+    gap: 10px;
+  }
+  .modal__actions .btn{ flex: 1 1 0; }
+
+  /* ---------- Адаптив ---------- */
+  @media (max-width: 560px){
+    body{ padding: 16px 10px; }
+    .checklist__header{ padding: 22px 20px 20px; }
+    .checklist__title{ font-size: 20px; }
+    .meta, .actions, .hint{ padding-left: 20px; padding-right: 20px; }
+    .result{ margin-left: 20px; margin-right: 20px; }
+    .items{ padding: 8px 8px; }
+    .item label{ padding: 12px; }
+    .category-title { padding-left: 12px; }
+  }
+</style>
+</head>
+
+<body>
+
+<main class="checklist" role="main">
+
+  <header class="checklist__header">
+    <h1 class="checklist__title">Чек-лист идеальной смены</h1>
+    <p class="checklist__subtitle">Твой ежедневный ритуал для спокойной и продуктивной работы.</p>
+
+    <div class="progress">
+      <div class="progress__bar">
+        <div class="progress__fill" id="progressFill"></div>
+      </div>
+      <div class="progress__label" id="progressLabel">Выполнено 0 из 10</div>
+    </div>
+  </header>
+
+  <section class="meta">
+    <div class="field">
+      <label class="field__label" for="specialistName">Специалист</label>
+      <input type="text" id="specialistName" placeholder="Иванов Иван">
+    </div>
+    <div class="field">
+      <label class="field__label" for="shiftDate">Дата смены</label>
+      <input type="date" id="shiftDate">
+    </div>
+  </section>
+
+  <ul class="items" id="itemsList">
+
+    <li class="category-title">☀️ Начало смены</li>
+
+    <li class="item">
+      <label>
+        <input type="checkbox" data-key="start_hub" data-category="Начало смены">
+        <span class="checkbox" aria-hidden="true"></span>
+        <span class="item__text">
+          <span class="item__title">Обновил страницы в Хабе</span>
+          <span class="item__desc">Получил актуальные справочники и статусы.</span>
+        </span>
+      </label>
+    </li>
+
+    <li class="item">
+      <label>
+        <input type="checkbox" data-key="start_wiki" data-category="Начало смены">
+        <span class="checkbox" aria-hidden="true"></span>
+        <span class="item__text">
+          <span class="item__title">Проверил изменения в Базе знаний</span>
+          <span class="item__desc">Ознакомился с новыми инструкциями.</span>
+        </span>
+      </label>
+    </li>
+
+    <li class="item">
+      <label>
+        <input type="checkbox" data-key="start_inventory" data-category="Начало смены">
+        <span class="checkbox" aria-hidden="true"></span>
+        <span class="item__text">
+          <span class="item__title">Оценил наличие байков и АКБ</span>
+          <span class="item__desc">Проверил зарядные шкафы и свободный транспорт.</span>
+        </span>
+      </label>
+    </li>
+
+    <li class="category-title">⚙️ В процессе работы</li>
+
+    <li class="item">
+      <label>
+        <input type="checkbox" data-key="work_docs" data-category="В процессе работы">
+        <span class="checkbox" aria-hidden="true"></span>
+        <span class="item__text">
+          <span class="item__title">Проверяю документы и долги</span>
+          <span class="item__desc">Сверяю ФИО, серию/номер и отсутствие задолженностей.</span>
+        </span>
+      </label>
+    </li>
+
+    <li class="item">
+      <label>
+        <input type="checkbox" data-key="work_status" data-category="В процессе работы">
+        <span class="checkbox" aria-hidden="true"></span>
+        <span class="item__text">
+          <span class="item__title">Сверяю статусы операций</span>
+          <span class="item__desc">Проверяю успех/ошибку после каждого действия в системе.</span>
+        </span>
+      </label>
+    </li>
+
+    <li class="item">
+      <label>
+        <input type="checkbox" data-key="work_acts" data-category="В процессе работы">
+        <span class="checkbox" aria-hidden="true"></span>
+        <span class="item__text">
+          <span class="item__title">Проверяю акты по чек-листу</span>
+          <span class="item__desc">Убеждаюсь в правильности выбора города, байка и ID.</span>
+        </span>
+      </label>
+    </li>
+
+    <li class="item">
+      <label>
+        <input type="checkbox" data-key="work_tables" data-category="В процессе работы">
+        <span class="checkbox" aria-hidden="true"></span>
+        <span class="item__text">
+          <span class="item__title">Вношу данные в таблицы сразу</span>
+          <span class="item__desc">Не откладываю учет на конец дня.</span>
+        </span>
+      </label>
+    </li>
+
+    <li class="category-title">🌙 Конец смены</li>
+
+    <li class="item">
+      <label>
+        <input type="checkbox" data-key="end_acts" data-category="Конец смены">
+        <span class="checkbox" aria-hidden="true"></span>
+        <span class="item__text">
+          <span class="item__title">Закрыл все акты и завершил операции</span>
+          <span class="item__desc">Убедился, что нет «зависших» аренд.</span>
+        </span>
+      </label>
+    </li>
+
+    <li class="item">
+      <label>
+        <input type="checkbox" data-key="end_sync" data-category="Конец смены">
+        <span class="checkbox" aria-hidden="true"></span>
+        <span class="item__text">
+          <span class="item__title">Сверил данные таблиц с реальностью</span>
+          <span class="item__desc">Проверил фактическое наличие байков.</span>
+        </span>
+      </label>
+    </li>
+
+    <li class="item">
+      <label>
+        <input type="checkbox" data-key="end_handover" data-category="Конец смены">
+        <span class="checkbox" aria-hidden="true"></span>
+        <span class="item__text">
+          <span class="item__title">Передал дела коллегам</span>
+          <span class="item__desc">Сообщил о нерешенных вопросах, если они остались.</span>
+        </span>
+      </label>
+    </li>
+
+  </ul>
+
+  <div class="result" id="result" role="status" aria-live="polite">
+    <span>✓</span>
+    <span>Смена идеальна! Все задачи выполнены и учтены.</span>
+  </div>
+
+  <div class="actions">
+    <button type="button" class="btn btn--primary" id="downloadBtn">Скачать результат (.doc)</button>
+    <button type="button" class="btn btn--ghost" id="resetBtn">Сбросить отметки</button>
+  </div>
+
+  <p class="hint">Отметки сохраняются автоматически в этом браузере. Скачайте заполненный чек-лист для отчётности или самопроверки.</p>
+
+</main>
+
+<!-- Модальное окно сброса -->
+<div class="modal" id="resetModal" role="dialog" aria-modal="true" aria-labelledby="resetModalText">
+  <div class="modal__dialog">
+    <p class="modal__text" id="resetModalText">Сбросить все отметки?</p>
+    <div class="modal__actions">
+      <button type="button" class="btn btn--primary" id="resetYes">Да</button>
+      <button type="button" class="btn btn--ghost" id="resetNo">Нет</button>
+    </div>
+  </div>
+</div>
+
+<!-- Модальное окно подтверждения скачивания -->
+<div class="modal" id="downloadModal" role="dialog" aria-modal="true" aria-labelledby="downloadModalText">
+  <div class="modal__dialog">
+    <p class="modal__text" id="downloadModalText">
+      Отмечено <span id="downloadDoneCount">0</span> из <span id="downloadTotalCount">10</span> пунктов.<br>
+      Файл будет сохранён с текущими отметками.<br>Продолжить?
+    </p>
+    <div class="modal__actions">
+      <button type="button" class="btn btn--primary" id="downloadYes">Да</button>
+      <button type="button" class="btn btn--ghost" id="downloadNo">Нет</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var STORAGE_KEY = 'ideal-shift-checklist-v1';
+
+  var checkboxes   = Array.prototype.slice.call(
+                       document.querySelectorAll('.item input[type="checkbox"]'));
+  var fill         = document.getElementById('progressFill');
+  var label        = document.getElementById('progressLabel');
+  var result       = document.getElementById('result');
+  var nameInput    = document.getElementById('specialistName');
+  var dateInput    = document.getElementById('shiftDate');
+  var resetBtn     = document.getElementById('resetBtn');
+  var downloadBtn  = document.getElementById('downloadBtn');
+
+  // Модалки и их кнопки
+  var resetModal   = document.getElementById('resetModal');
+  var resetYes     = document.getElementById('resetYes');
+  var resetNo      = document.getElementById('resetNo');
+
+  var downloadModal = document.getElementById('downloadModal');
+  var downloadYes   = document.getElementById('downloadYes');
+  var downloadNo    = document.getElementById('downloadNo');
+  var downloadDoneCount = document.getElementById('downloadDoneCount');
+  var downloadTotalCount = document.getElementById('downloadTotalCount');
+
+  var state = loadState();
+  var lastFocused = null;
+
+  /* ---------- Хранилище ---------- */
+  function loadState() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+
+  function saveState() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {}
+  }
+
+  /* ---------- Инициализация ---------- */
+  function init() {
+    state.items = state.items || {};
+
+    checkboxes.forEach(function (cb) {
+      var key = cb.dataset.key;
+      if (state.items[key]) cb.checked = true;
+
+      cb.addEventListener('change', function () {
+        state.items[key] = cb.checked;
+        saveState();
+        render();
+      });
+    });
+
+    nameInput.value = state.name || '';
+    dateInput.value = state.date || todayISO();
+
+    nameInput.addEventListener('input', function () {
+      state.name = nameInput.value;
+      saveState();
+    });
+
+    dateInput.addEventListener('change', function () {
+      state.date = dateInput.value;
+      saveState();
+    });
+
+    render();
+  }
+
+  function todayISO() {
+    var d = new Date();
+    var m = String(d.getMonth() + 1).padStart(2, '0');
+    var day = String(d.getDate()).padStart(2, '0');
+    return d.getFullYear() + '-' + m + '-' + day;
+  }
+
+  function formatDateRu(iso) {
+    if (!iso) return '—';
+    var parts = iso.split('-');
+    if (parts.length !== 3) return iso;
+    return parts[2] + '.' + parts[1] + '.' + parts[0];
+  }
+
+  /* ---------- Отрисовка состояния ---------- */
+  function render() {
+    var total = checkboxes.length;
+    var done  = checkboxes.filter(function (cb) { return cb.checked; }).length;
+    var allDone = total > 0 && done === total;
+
+    fill.style.width = (total ? (done / total * 100) : 0) + '%';
+    label.textContent = 'Выполнено ' + done + ' из ' + total;
+
+    checkboxes.forEach(function (cb) {
+      cb.closest('.item').classList.toggle('is-done', cb.checked);
+    });
+
+    result.classList.toggle('is-visible', allDone);
+  }
+
+  /* ---------- Вспомогательные ---------- */
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c];
+    });
+  }
+
+  function safeFileName(s) {
+    return String(s || '')
+      .replace(/[\\/:*?"<>|]+/g, '_')
+      .replace(/\s+/g, '_')
+      .slice(0, 30) || 'без_имени';
+  }
+
+  /* ---------- Управление модальными окнами ---------- */
+  function openModal(modal) {
+    lastFocused = document.activeElement;
+    modal.classList.add('is-open');
+    var noBtn = modal.querySelector('.btn--ghost');
+    if (noBtn) noBtn.focus();
+  }
+
+  function closeModal(modal) {
+    modal.classList.remove('is-open');
+    if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+  }
+
+  [resetModal, downloadModal].forEach(function(modal) {
+    modal.addEventListener('click', function (e) {
+      if (e.target === modal) closeModal(modal);
+    });
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      var openModalElement = document.querySelector('.modal.is-open');
+      if (openModalElement) {
+        e.preventDefault();
+        closeModal(openModalElement);
+      }
+    }
+  });
+
+  /* ---------- Кнопка сброса ---------- */
+  resetBtn.addEventListener('click', function() { openModal(resetModal); });
+
+  resetYes.addEventListener('click', function () {
+    checkboxes.forEach(function (cb) { cb.checked = false; });
+    state.items = {};
+    saveState();
+    render();
+    closeModal(resetModal);
+  });
+
+  resetNo.addEventListener('click', function () { closeModal(resetModal); });
+
+  /* ---------- Кнопка скачивания ---------- */
+  downloadBtn.addEventListener('click', function() {
+    var total = checkboxes.length;
+    var done = checkboxes.filter(function (cb) { return cb.checked; }).length;
+
+    if (done === total) {
+      generateAndDownloadDoc();
+    } else {
+      downloadDoneCount.textContent = done;
+      downloadTotalCount.textContent = total;
+      openModal(downloadModal);
+    }
+  });
+
+  downloadYes.addEventListener('click', function() {
+    closeModal(downloadModal);
+    generateAndDownloadDoc();
+  });
+
+  downloadNo.addEventListener('click', function() { closeModal(downloadModal); });
+
+  /* ---------- Генерация .doc файла ---------- */
+  function generateAndDownloadDoc() {
+    var specName = nameInput.value.trim();
+    var date = dateInput.value || todayISO();
+
+    var total = checkboxes.length;
+    var done  = checkboxes.filter(function (cb) { return cb.checked; }).length;
+    var allDone = done === total;
+
+    // Группируем строки по категориям для красивого вывода в Word
+    var groupedRows = {};
+    checkboxes.forEach(function (cb) {
+      var item  = cb.closest('.item');
+      var title = item.querySelector('.item__title').textContent;
+      var desc  = item.querySelector('.item__desc').textContent;
+      var cat   = cb.dataset.category || 'Задачи';
+      var mark  = cb.checked ? '☑' : '☐';
+      var color = cb.checked ? '#2B95CA' : '#2D2D2C';
+
+      if (!groupedRows[cat]) groupedRows[cat] = [];
+      
+      groupedRows[cat].push(
+        '<tr>' +
+          '<td style="padding:8px 10px;border:1px solid #BFD7E4;text-align:center;' +
+              'font-size:18px;line-height:1;color:' + color + ';">' + mark + '</td>' +
+          '<td style="padding:8px 10px;border:1px solid #BFD7E4;">' +
+            '<b>' + escapeHtml(title) + '</b><br>' +
+            '<span style="font-size:12px;color:#555;">' + escapeHtml(desc) + '</span>' +
+          '</td>' +
+        '</tr>'
+      );
+    });
+
+    var rowsHtml = '';
+    for (var cat in groupedRows) {
+      rowsHtml += '<tr><td colspan="2" style="padding:12px 10px 6px; border:none; font-weight:bold; font-size:16px; color:#2B95CA;">' + escapeHtml(cat) + '</td></tr>';
+      rowsHtml += groupedRows[cat].join('');
+    }
+
+    var verdict = allDone ? 'СМЕНА ИДЕАЛЬНА' : 'ЕСТЬ НЕОТМЕЧЕННЫЕ ПУНКТЫ';
+    var verdictColor = allDone ? '#2B95CA' : '#B23A2E';
+
+    var html =
+      '<html xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+            'xmlns:w="urn:schemas-microsoft-com:office:word" ' +
+            'xmlns="http://www.w3.org/TR/REC-html40">' +
+      '<head>' +
+        '<meta charset="utf-8">' +
+        '<title>Чек-лист идеальной смены</title>' +
+        '<style>@page{size:A4;margin:18mm;} body{font-family:Arial,Helvetica,sans-serif;color:#2D2D2C;font-size:14px;}</style>' +
+      '</head>' +
+      '<body>' +
+        '<h1 style="color:#2B95CA;margin:0 0 16px;font-size:22px;">Чек-лист идеальной смены</h1>' +
+        '<table style="border-collapse:collapse;margin-bottom:16px;">' +
+          '<tr><td style="padding:4px 12px 4px 0;color:#555;">Специалист:</td>' +
+              '<td style="padding:4px 0;"><b>' + escapeHtml(specName || '—') + '</b></td></tr>' +
+          '<tr><td style="padding:4px 12px 4px 0;color:#555;">Дата смены:</td>' +
+              '<td style="padding:4px 0;"><b>' + escapeHtml(formatDateRu(date)) + '</b></td></tr>' +
+          '<tr><td style="padding:4px 12px 4px 0;color:#555;">Результат:</td>' +
+              '<td style="padding:4px 0;"><b style="color:' + verdictColor + ';">' +
+              escapeHtml(done + ' из ' + total + ' — ' + verdict) + '</b></td></tr>' +
+        '</table>' +
+        '<table style="border-collapse:collapse;width:100%;">' + rowsHtml + '</table>' +
+        '<p style="margin-top:24px;font-size:11px;color:#777;">' +
+          'Документ сформирован автоматически ' + escapeHtml(new Date().toLocaleString('ru-RU')) + '.' +
+        '</p>' +
+      '</body></html>';
+
+    var blob = new Blob(['\ufeff', html], { type: 'application/msword;charset=utf-8' });
+    var url  = URL.createObjectURL(blob);
+    var a    = document.createElement('a');
+    a.href = url;
+    a.download = 'чек-лист_смены_' + safeFileName(specName) + '_' + date + '.doc';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1500);
+  }
+
+  init();
+})();
+</script>
+
+</body>
+</html>
